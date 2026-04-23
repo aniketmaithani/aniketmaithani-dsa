@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prefix Sum Visualizer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-strong: rgba(15, 23, 42, 0.95);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5eefb;
+      --muted: #9fb0cc;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 24px;
+      --cell-size: 64px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), transparent 28%),
+        radial-gradient(circle at top right, rgba(6, 182, 212, 0.22), transparent 25%),
+        linear-gradient(160deg, #020617 0%, #0b1020 45%, #111827 100%);
+      padding: 28px;
+    }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(6, 182, 212, 0.12));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 900px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(2, 6, 23, 0.65);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: 160ms ease;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(99, 102, 241, 0.65);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: transform 120ms ease, opacity 120ms ease, box-shadow 160ms ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary { background: linear-gradient(135deg, var(--accent), #4f46e5); }
+    .secondary { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid var(--border); }
+    .cyan { background: linear-gradient(135deg, var(--accent-2), #0284c7); }
+    .green { background: linear-gradient(135deg, var(--good), #15803d); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .stat {
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .stat .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 20px;
+    }
+
+    .array-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .array-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .array-header h3, .code-card h3, .explain-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.12);
+      color: #c7d2fe;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .row-title {
+      width: 100%;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: 0.92rem;
+    }
+
+    .array-wrap {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .cell-block {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      transition: transform 260ms ease, opacity 260ms ease;
+    }
+
+    .index-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.92));
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 25px rgba(0,0,0,0.22);
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .cell-block.active .cell {
+      border-color: rgba(6, 182, 212, 0.8);
+      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.18), 0 12px 30px rgba(0,0,0,0.24);
+      transform: translateY(-2px);
+    }
+
+    .cell-block.filled .cell {
+      border-color: rgba(34, 197, 94, 0.55);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.dim {
+      opacity: 0.52;
+    }
+
+    .temp-slot {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mini-box {
+      min-width: 140px;
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .mini-box .small {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .mini-box .big {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .code-card, .explain-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .code-head, .explain-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .code-window {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      padding: 10px;
+      max-height: 540px;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.95));
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #dbeafe;
+      transition: background 180ms ease, transform 180ms ease, opacity 180ms ease;
+      white-space: pre-wrap;
+    }
+
+    .code-line.active {
+      background: linear-gradient(90deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.14));
+      outline: 1px solid rgba(99, 102, 241, 0.28);
+      transform: translateX(2px);
+    }
+
+    .code-line.done {
+      opacity: 0.72;
+    }
+
+    .line-num {
+      color: #64748b;
+      text-align: right;
+      user-select: none;
+    }
+
+    .explain-body {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-text {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.98rem;
+      min-height: 96px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .dot.active { background: var(--accent-2); }
+    .dot.normal { background: #334155; }
+    .dot.temp { background: var(--warn); }
+    .dot.done { background: var(--good); }
+
+    .footer-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: rgba(2, 6, 23, 0.45);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      .grid, .lower-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .hero, .panel, .array-card, .code-card, .explain-card { padding-left: 16px; padding-right: 16px; }
+      .code-head, .explain-head { padding-left: 16px; padding-right: 16px; }
+      .cell { width: 54px; height: 54px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Prefix Sum Visualizer</h1>
+      <p>
+        Learn prefix sum like a fresher. Watch how we build a new array where each position stores the sum of all values from index 0 up to that index.
+      </p>
+    </section>
+
+    <section class="grid">
+      <aside class="panel">
+        <h2>Controls</h2>
+        <div class="controls">
+          <div class="control-group">
+            <label for="arrayInput">Array values</label>
+            <input id="arrayInput" value="2, 4, 1, 6, 3" />
+          </div>
+
+          <div class="control-group">
+            <label for="modeSelect">Prefix sum style</label>
+            <select id="modeSelect">
+              <option value="running">Using running sum</option>
+              <option value="formula">Using prefix[i-1] + arr[i]</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button class="primary" id="buildBtn">Build demo</button>
+            <button class="secondary" id="prevBtn">Previous</button>
+            <button class="cyan" id="nextBtn">Next</button>
+            <button class="green" id="playBtn">Play</button>
+            <button class="secondary" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Current step</div>
+              <div class="value" id="stepValue">0 / 0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Length</div>
+              <div class="value" id="lengthValue">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Time complexity</div>
+              <div class="value">O(n)</div>
+            </div>
+            <div class="stat">
+              <div class="label">Extra space</div>
+              <div class="value">O(n)</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <section class="array-card">
+          <div class="array-header">
+            <h3>Live Array State</h3>
+            <div class="badge" id="resultBadge">Ready to visualize</div>
+          </div>
+          <div class="array-wrap" id="arrayWrap"></div>
+
+          <div class="temp-slot">
+            <div class="mini-box">
+              <div class="small">Running sum / value</div>
+              <div class="big" id="tempValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Current movement</div>
+              <div class="big" id="movementValue">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lower-grid">
+          <section class="code-card">
+            <div class="code-head">
+              <h3>Code Execution</h3>
+              <span class="badge" id="algoBadge">Prefix sum build</span>
+            </div>
+            <div class="code-window" id="codeWindow"></div>
+          </section>
+
+          <section class="explain-card">
+            <div class="explain-head">
+              <h3>What is happening</h3>
+              <div class="legend">
+                <div class="legend-item"><span class="dot active"></span>Active index</div>
+                <div class="legend-item"><span class="dot done"></span>Prefix built</div>
+                <div class="legend-item"><span class="dot temp"></span>Current sum</div>
+              </div>
+            </div>
+            <div class="explain-body">
+              <div class="explain-text" id="explainText">
+                Enter values and press <strong>Build demo</strong> to generate a step-by-step prefix sum walkthrough.
+              </div>
+              <div class="footer-note">
+                Prefix sum idea:<br />
+                <strong>prefix[i] = arr[0] + arr[1] + ... + arr[i]</strong><br />
+                This helps answer many range sum questions quickly.
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const arrayInput = document.getElementById('arrayInput');
+    const modeSelect = document.getElementById('modeSelect');
+    const buildBtn = document.getElementById('buildBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const arrayWrap = document.getElementById('arrayWrap');
+    const codeWindow = document.getElementById('codeWindow');
+    const explainText = document.getElementById('explainText');
+    const stepValue = document.getElementById('stepValue');
+    const lengthValue = document.getElementById('lengthValue');
+    const tempValue = document.getElementById('tempValue');
+    const movementValue = document.getElementById('movementValue');
+    const resultBadge = document.getElementById('resultBadge');
+    const algoBadge = document.getElementById('algoBadge');
+
+    let steps = [];
+    let currentStep = 0;
+    let timer = null;
+
+    function parseArray() {
+      return arrayInput.value
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => Number(item));
+    }
+
+    function buildCodeLines(mode) {
+      if (mode === 'formula') {
+        return [
+          'arr = [ ... ]',
+          'n = len(arr)',
+          'prefix = [0] * n',
+          'prefix[0] = arr[0]',
+          'for i in range(1, n):',
+          '    prefix[i] = prefix[i - 1] + arr[i]',
+          'return prefix'
+        ];
+      }
+
+      return [
+        'arr = [ ... ]',
+        'n = len(arr)',
+        'prefix = [0] * n',
+        'running_sum = 0',
+        'for i in range(n):',
+        '    running_sum += arr[i]',
+        '    prefix[i] = running_sum',
+        'return prefix'
+      ];
+    }
+
+    function snapshot({ arr, prefix, activeIndex = null, line, text, temp = null, move = null, builtUntil = -1 }) {
+      return {
+        arr: [...arr],
+        prefix: [...prefix],
+        activeIndex,
+        line,
+        text,
+        temp,
+        move,
+        builtUntil
+      };
+    }
+
+    function generateRunningSteps(arr) {
+      const n = arr.length;
+      const prefix = new Array(n).fill('·');
+      const localSteps = [];
+      let running = 0;
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 1,
+        text: 'We start with the original array.',
+        move: 'Initial state'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 2,
+        text: `n is the length of the array, so n = ${n}.`,
+        temp: n,
+        move: 'Length computed'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 3,
+        text: 'We create an empty prefix array of the same size.',
+        temp: '[' + prefix.join(', ') + ']',
+        move: 'Prefix array created'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 4,
+        text: 'running_sum starts from 0. We will keep adding elements to it.',
+        temp: 0,
+        move: 'Running sum initialized'
+      }));
+
+      for (let i = 0; i < n; i++) {
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: i,
+          line: 5,
+          text: `Loop starts for i = ${i}. We now process arr[${i}] = ${arr[i]}.`,
+          temp: arr[i],
+          move: `Inspecting index ${i}`,
+          builtUntil: i - 1
+        }));
+
+        running += arr[i];
+
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: i,
+          line: 6,
+          text: `We add arr[${i}] to running_sum. New running sum = ${running}.`,
+          temp: running,
+          move: `${running - arr[i]} + ${arr[i]} = ${running}`,
+          builtUntil: i - 1
+        }));
+
+        prefix[i] = running;
+
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: i,
+          line: 7,
+          text: `We store running_sum into prefix[${i}], so prefix[${i}] = ${running}.`,
+          temp: running,
+          move: `prefix[${i}] = ${running}`,
+          builtUntil: i
+        }));
+      }
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 8,
+        text: 'The prefix sum array is complete.',
+        temp: '[' + prefix.join(', ') + ']',
+        move: 'Final prefix array ready',
+        builtUntil: n - 1
+      }));
+
+      return localSteps;
+    }
+
+    function generateFormulaSteps(arr) {
+      const n = arr.length;
+      const prefix = new Array(n).fill('·');
+      const localSteps = [];
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 1,
+        text: 'We start with the original array.',
+        move: 'Initial state'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 2,
+        text: `n is the length of the array, so n = ${n}.`,
+        temp: n,
+        move: 'Length computed'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 3,
+        text: 'We create an empty prefix array of the same size.',
+        temp: '[' + prefix.join(', ') + ']',
+        move: 'Prefix array created'
+      }));
+
+      if (n > 0) {
+        prefix[0] = arr[0];
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: 0,
+          line: 4,
+          text: `The first prefix value is always the first element itself, so prefix[0] = arr[0] = ${arr[0]}.`,
+          temp: arr[0],
+          move: `prefix[0] = ${arr[0]}`,
+          builtUntil: 0
+        }));
+      }
+
+      for (let i = 1; i < n; i++) {
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: i,
+          line: 5,
+          text: `Loop starts for i = ${i}. We now build prefix[${i}] using the previous prefix value.`,
+          temp: arr[i],
+          move: `Inspecting index ${i}`,
+          builtUntil: i - 1
+        }));
+
+        prefix[i] = prefix[i - 1] + arr[i];
+
+        localSteps.push(snapshot({
+          arr,
+          prefix,
+          activeIndex: i,
+          line: 6,
+          text: `prefix[${i}] = prefix[${i - 1}] + arr[${i}] = ${prefix[i - 1]} + ${arr[i]} = ${prefix[i]}.`,
+          temp: prefix[i],
+          move: `${prefix[i - 1]} + ${arr[i]} = ${prefix[i]}`,
+          builtUntil: i
+        }));
+      }
+
+      localSteps.push(snapshot({
+        arr,
+        prefix,
+        line: 7,
+        text: 'The prefix sum array is complete.',
+        temp: '[' + prefix.join(', ') + ']',
+        move: 'Final prefix array ready',
+        builtUntil: n - 1
+      }));
+
+      return localSteps;
+    }
+
+    function renderCode(mode, activeLine) {
+      const lines = buildCodeLines(mode);
+      codeWindow.innerHTML = '';
+
+      lines.forEach((content, index) => {
+        const lineNumber = index + 1;
+        const row = document.createElement('div');
+        row.className = 'code-line';
+        if (lineNumber === activeLine) row.classList.add('active');
+        if (lineNumber < activeLine) row.classList.add('done');
+
+        row.innerHTML = `
+          <div class="line-num">${lineNumber}</div>
+          <div>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        `;
+        codeWindow.appendChild(row);
+      });
+    }
+
+    function appendRowTitle(text) {
+      const title = document.createElement('div');
+      title.className = 'row-title';
+      title.textContent = text;
+      arrayWrap.appendChild(title);
+    }
+
+    function appendArrayRow(values, activeIndex, builtUntil, rowMode) {
+      values.forEach((value, index) => {
+        const block = document.createElement('div');
+        block.className = 'cell-block';
+        if (index === activeIndex) block.classList.add('active');
+        if (rowMode === 'prefix' && index <= builtUntil) block.classList.add('filled');
+        if (activeIndex !== null && index !== activeIndex && rowMode === 'source') block.classList.add('dim');
+
+        block.innerHTML = `
+          <div class="index-label">index ${index}</div>
+          <div class="cell">${value}</div>
+        `;
+        arrayWrap.appendChild(block);
+      });
+    }
+
+    function renderArray(step) {
+      arrayWrap.innerHTML = '';
+      appendRowTitle('Original array');
+      appendArrayRow(step.arr, step.activeIndex, step.builtUntil, 'source');
+
+      const spacer = document.createElement('div');
+      spacer.style.width = '100%';
+      spacer.style.height = '6px';
+      arrayWrap.appendChild(spacer);
+
+      appendRowTitle('Prefix sum array being built');
+      appendArrayRow(step.prefix, step.activeIndex, step.builtUntil, 'prefix');
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const step = steps[currentStep];
+      renderArray(step);
+      renderCode(modeSelect.value, step.line);
+      explainText.innerHTML = step.text;
+      stepValue.textContent = `${currentStep + 1} / ${steps.length}`;
+      tempValue.textContent = step.temp ?? '—';
+      movementValue.textContent = step.move ?? '—';
+      resultBadge.textContent = currentStep === steps.length - 1 ? 'Prefix sum complete' : 'Visualizing step by step';
+      algoBadge.textContent = modeSelect.value === 'running' ? 'Running sum method' : 'Formula method';
+    }
+
+    function stopPlay() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        playBtn.textContent = 'Play';
+      }
+    }
+
+    function buildDemo() {
+      stopPlay();
+      const arr = parseArray();
+
+      if (!arr.length || arr.some(Number.isNaN)) {
+        explainText.innerHTML = 'Please enter a valid numeric array like <strong>2, 4, 1, 6</strong>.';
+        arrayWrap.innerHTML = '';
+        codeWindow.innerHTML = '';
+        stepValue.textContent = '0 / 0';
+        lengthValue.textContent = '0';
+        tempValue.textContent = '—';
+        movementValue.textContent = '—';
+        resultBadge.textContent = 'Invalid input';
+        return;
+      }
+
+      steps = modeSelect.value === 'running' ? generateRunningSteps(arr) : generateFormulaSteps(arr);
+      currentStep = 0;
+      lengthValue.textContent = arr.length;
+      renderStep();
+    }
+
+    prevBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.max(0, currentStep - 1);
+      renderStep();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.min(steps.length - 1, currentStep + 1);
+      renderStep();
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (!steps.length) buildDemo();
+      if (!steps.length) return;
+
+      if (timer) {
+        stopPlay();
+        return;
+      }
+
+      playBtn.textContent = 'Pause';
+      timer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          stopPlay();
+          return;
+        }
+        currentStep += 1;
+        renderStep();
+      }, 1200);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      stopPlay();
+      currentStep = 0;
+      if (steps.length) renderStep();
+    });
+
+    buildBtn.addEventListener('click', buildDemo);
+    modeSelect.addEventListener('change', buildDemo);
+
+    buildDemo();
+  </script>
+</body>
+</html>

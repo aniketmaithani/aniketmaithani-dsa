@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kadane's Algorithm Visualizer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-strong: rgba(15, 23, 42, 0.95);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5eefb;
+      --muted: #9fb0cc;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 24px;
+      --cell-size: 64px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), transparent 28%),
+        radial-gradient(circle at top right, rgba(6, 182, 212, 0.22), transparent 25%),
+        linear-gradient(160deg, #020617 0%, #0b1020 45%, #111827 100%);
+      padding: 28px;
+    }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(6, 182, 212, 0.12));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 920px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(2, 6, 23, 0.65);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: 160ms ease;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(99, 102, 241, 0.65);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: transform 120ms ease, opacity 120ms ease, box-shadow 160ms ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary { background: linear-gradient(135deg, var(--accent), #4f46e5); }
+    .secondary { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid var(--border); }
+    .cyan { background: linear-gradient(135deg, var(--accent-2), #0284c7); }
+    .green { background: linear-gradient(135deg, var(--good), #15803d); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .stat {
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .stat .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 20px;
+    }
+
+    .array-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .array-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .array-header h3, .code-card h3, .explain-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.12);
+      color: #c7d2fe;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .row-title {
+      width: 100%;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: 0.92rem;
+    }
+
+    .array-wrap {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .cell-block {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      transition: transform 260ms ease, opacity 260ms ease;
+    }
+
+    .index-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.92));
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 25px rgba(0,0,0,0.22);
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .cell-block.active .cell {
+      border-color: rgba(6, 182, 212, 0.8);
+      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.18), 0 12px 30px rgba(0,0,0,0.24);
+      transform: translateY(-2px);
+    }
+
+    .cell-block.best .cell {
+      border-color: rgba(34, 197, 94, 0.7);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.current-range .cell {
+      border-color: rgba(245, 158, 11, 0.75);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.dim {
+      opacity: 0.45;
+    }
+
+    .temp-slot {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mini-box {
+      min-width: 160px;
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .mini-box .small {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .mini-box .big {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .code-card, .explain-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .code-head, .explain-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .code-window {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      padding: 10px;
+      max-height: 560px;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.95));
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #dbeafe;
+      transition: background 180ms ease, transform 180ms ease, opacity 180ms ease;
+      white-space: pre-wrap;
+    }
+
+    .code-line.active {
+      background: linear-gradient(90deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.14));
+      outline: 1px solid rgba(99, 102, 241, 0.28);
+      transform: translateX(2px);
+    }
+
+    .code-line.done {
+      opacity: 0.72;
+    }
+
+    .line-num {
+      color: #64748b;
+      text-align: right;
+      user-select: none;
+    }
+
+    .explain-body {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-text {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.98rem;
+      min-height: 120px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .dot.active { background: var(--accent-2); }
+    .dot.current { background: var(--warn); }
+    .dot.best { background: var(--good); }
+
+    .footer-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: rgba(2, 6, 23, 0.45);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      .grid, .lower-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .hero, .panel, .array-card, .code-card, .explain-card { padding-left: 16px; padding-right: 16px; }
+      .code-head, .explain-head { padding-left: 16px; padding-right: 16px; }
+      .cell { width: 54px; height: 54px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Kadane's Algorithm Visualizer</h1>
+      <p>
+        Learn Kadane's Algorithm like a fresher. Watch how we decide whether to start a new subarray or extend the current one, while tracking the best maximum subarray sum seen so far.
+      </p>
+    </section>
+
+    <section class="grid">
+      <aside class="panel">
+        <h2>Controls</h2>
+        <div class="controls">
+          <div class="control-group">
+            <label for="arrayInput">Array values</label>
+            <input id="arrayInput" value="-2, 1, -3, 4, -1, 2, 1, -5, 4" />
+          </div>
+
+          <div class="control-group">
+            <label for="variantSelect">Kadane style</label>
+            <select id="variantSelect">
+              <option value="classic">Classic: current_sum = max(num, current_sum + num)</option>
+              <option value="branch">Branching: reset or extend</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button class="primary" id="buildBtn">Build demo</button>
+            <button class="secondary" id="prevBtn">Previous</button>
+            <button class="cyan" id="nextBtn">Next</button>
+            <button class="green" id="playBtn">Play</button>
+            <button class="secondary" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Current step</div>
+              <div class="value" id="stepValue">0 / 0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Length</div>
+              <div class="value" id="lengthValue">0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Time complexity</div>
+              <div class="value">O(n)</div>
+            </div>
+            <div class="stat">
+              <div class="label">Extra space</div>
+              <div class="value">O(1)</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <section class="array-card">
+          <div class="array-header">
+            <h3>Live Array State</h3>
+            <div class="badge" id="resultBadge">Ready to visualize</div>
+          </div>
+          <div class="array-wrap" id="arrayWrap"></div>
+
+          <div class="temp-slot">
+            <div class="mini-box">
+              <div class="small">Current sum</div>
+              <div class="big" id="currentSumValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Maximum sum so far</div>
+              <div class="big" id="bestSumValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Current movement</div>
+              <div class="big" id="movementValue">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lower-grid">
+          <section class="code-card">
+            <div class="code-head">
+              <h3>Code Execution</h3>
+              <span class="badge" id="algoBadge">Kadane build</span>
+            </div>
+            <div class="code-window" id="codeWindow"></div>
+          </section>
+
+          <section class="explain-card">
+            <div class="explain-head">
+              <h3>What is happening</h3>
+              <div class="legend">
+                <div class="legend-item"><span class="dot active"></span>Active index</div>
+                <div class="legend-item"><span class="dot current"></span>Current subarray</div>
+                <div class="legend-item"><span class="dot best"></span>Best subarray</div>
+              </div>
+            </div>
+            <div class="explain-body">
+              <div class="explain-text" id="explainText">
+                Enter values and press <strong>Build demo</strong> to generate a step-by-step Kadane walkthrough.
+              </div>
+              <div class="footer-note">
+                Kadane's key idea:<br />
+                <strong>At each index, either start fresh from this number or extend the previous subarray.</strong><br />
+                Then keep track of the best sum seen anywhere.
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const arrayInput = document.getElementById('arrayInput');
+    const variantSelect = document.getElementById('variantSelect');
+    const buildBtn = document.getElementById('buildBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const arrayWrap = document.getElementById('arrayWrap');
+    const codeWindow = document.getElementById('codeWindow');
+    const explainText = document.getElementById('explainText');
+    const stepValue = document.getElementById('stepValue');
+    const lengthValue = document.getElementById('lengthValue');
+    const currentSumValue = document.getElementById('currentSumValue');
+    const bestSumValue = document.getElementById('bestSumValue');
+    const movementValue = document.getElementById('movementValue');
+    const resultBadge = document.getElementById('resultBadge');
+    const algoBadge = document.getElementById('algoBadge');
+
+    let steps = [];
+    let currentStep = 0;
+    let timer = null;
+
+    function parseArray() {
+      return arrayInput.value
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => Number(item));
+    }
+
+    function buildCodeLines(variant) {
+      if (variant === 'branch') {
+        return [
+          'nums = [ ... ]',
+          'current_sum = nums[0]',
+          'max_sum = nums[0]',
+          'for i in range(1, len(nums)):',
+          '    if current_sum + nums[i] < nums[i]:',
+          '        current_sum = nums[i]',
+          '    else:',
+          '        current_sum = current_sum + nums[i]',
+          '    max_sum = max(max_sum, current_sum)',
+          'return max_sum'
+        ];
+      }
+
+      return [
+        'nums = [ ... ]',
+        'current_sum = nums[0]',
+        'max_sum = nums[0]',
+        'for i in range(1, len(nums)):',
+        '    current_sum = max(nums[i], current_sum + nums[i])',
+        '    max_sum = max(max_sum, current_sum)',
+        'return max_sum'
+      ];
+    }
+
+    function snapshot({
+      arr,
+      activeIndex = null,
+      line,
+      text,
+      movement = null,
+      currentSum = null,
+      maxSum = null,
+      currentStart = 0,
+      currentEnd = 0,
+      bestStart = 0,
+      bestEnd = 0
+    }) {
+      return {
+        arr: [...arr],
+        activeIndex,
+        line,
+        text,
+        movement,
+        currentSum,
+        maxSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      };
+    }
+
+    function generateClassicSteps(arr) {
+      const localSteps = [];
+      let currentSum = arr[0];
+      let maxSum = arr[0];
+      let currentStart = 0;
+      let currentEnd = 0;
+      let bestStart = 0;
+      let bestEnd = 0;
+
+      localSteps.push(snapshot({
+        arr,
+        line: 1,
+        text: 'We start with the given array.',
+        movement: 'Initial state'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        activeIndex: 0,
+        line: 2,
+        text: `current_sum starts from the first element, so current_sum = ${arr[0]}.`,
+        movement: `current_sum = ${arr[0]}`,
+        currentSum,
+        maxSum: null,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        activeIndex: 0,
+        line: 3,
+        text: `max_sum also starts from the first element, so max_sum = ${arr[0]}.`,
+        movement: `max_sum = ${arr[0]}`,
+        currentSum,
+        maxSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      for (let i = 1; i < arr.length; i++) {
+        localSteps.push(snapshot({
+          arr,
+          activeIndex: i,
+          line: 4,
+          text: `Now we are at index ${i} with value ${arr[i]}. We must decide whether to start fresh here or extend the current subarray.`,
+          movement: `Inspecting index ${i}`,
+          currentSum,
+          maxSum,
+          currentStart,
+          currentEnd,
+          bestStart,
+          bestEnd
+        }));
+
+        const extendSum = currentSum + arr[i];
+        const startFresh = arr[i];
+
+        if (startFresh > extendSum) {
+          currentSum = startFresh;
+          currentStart = i;
+          currentEnd = i;
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 5,
+            text: `max(${arr[i]}, ${extendSum}) = ${arr[i]}. Starting a new subarray here is better than extending the old one.`,
+            movement: `Start new at index ${i}`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        } else {
+          currentSum = extendSum;
+          currentEnd = i;
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 5,
+            text: `max(${arr[i]}, ${extendSum}) = ${extendSum}. Extending the current subarray gives a better sum.`,
+            movement: `Extend current subarray to ${i}`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        }
+
+        if (currentSum > maxSum) {
+          maxSum = currentSum;
+          bestStart = currentStart;
+          bestEnd = currentEnd;
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 6,
+            text: `current_sum = ${currentSum} is better than old max_sum, so we update max_sum to ${maxSum}.`,
+            movement: `New best sum found: ${maxSum}`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        } else {
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 6,
+            text: `current_sum = ${currentSum} does not beat max_sum = ${maxSum}, so best answer stays the same.`,
+            movement: `Best sum unchanged`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        }
+      }
+
+      localSteps.push(snapshot({
+        arr,
+        line: 7,
+        text: `Kadane is complete. Maximum subarray sum = ${maxSum}, from index ${bestStart} to ${bestEnd}.`,
+        movement: 'Final answer ready',
+        currentSum,
+        maxSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      return localSteps;
+    }
+
+    function generateBranchSteps(arr) {
+      const localSteps = [];
+      let currentSum = arr[0];
+      let maxSum = arr[0];
+      let currentStart = 0;
+      let currentEnd = 0;
+      let bestStart = 0;
+      let bestEnd = 0;
+
+      localSteps.push(snapshot({
+        arr,
+        line: 1,
+        text: 'We start with the given array.',
+        movement: 'Initial state'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        activeIndex: 0,
+        line: 2,
+        text: `current_sum starts from the first element, so current_sum = ${arr[0]}.`,
+        movement: `current_sum = ${arr[0]}`,
+        currentSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        activeIndex: 0,
+        line: 3,
+        text: `max_sum also starts from the first element, so max_sum = ${arr[0]}.`,
+        movement: `max_sum = ${arr[0]}`,
+        currentSum,
+        maxSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      for (let i = 1; i < arr.length; i++) {
+        localSteps.push(snapshot({
+          arr,
+          activeIndex: i,
+          line: 4,
+          text: `Now we are at index ${i} with value ${arr[i]}. We check whether keeping the previous subarray still helps.`,
+          movement: `Inspecting index ${i}`,
+          currentSum,
+          maxSum,
+          currentStart,
+          currentEnd,
+          bestStart,
+          bestEnd
+        }));
+
+        if (currentSum + arr[i] < arr[i]) {
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 5,
+            text: `${currentSum} + ${arr[i]} = ${currentSum + arr[i]} is smaller than ${arr[i]}, so old subarray hurts us.`,
+            movement: 'Condition true: reset',
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+
+          currentSum = arr[i];
+          currentStart = i;
+          currentEnd = i;
+
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 6,
+            text: `We reset current_sum to ${arr[i]} and start a fresh subarray at index ${i}.`,
+            movement: `Start new at ${i}`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        } else {
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 5,
+            text: `${currentSum} + ${arr[i]} = ${currentSum + arr[i]} is not smaller than ${arr[i]}, so extending is fine.`,
+            movement: 'Condition false: extend',
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 7,
+            text: 'The else block runs because extending the current subarray is better or equal.',
+            movement: 'Entering else block',
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+
+          currentSum = currentSum + arr[i];
+          currentEnd = i;
+
+          localSteps.push(snapshot({
+            arr,
+            activeIndex: i,
+            line: 8,
+            text: `We extend the current subarray, so current_sum becomes ${currentSum}.`,
+            movement: `Extended to index ${i}`,
+            currentSum,
+            maxSum,
+            currentStart,
+            currentEnd,
+            bestStart,
+            bestEnd
+          }));
+        }
+
+        if (currentSum > maxSum) {
+          maxSum = currentSum;
+          bestStart = currentStart;
+          bestEnd = currentEnd;
+        }
+
+        localSteps.push(snapshot({
+          arr,
+          activeIndex: i,
+          line: 9,
+          text: `Now max_sum becomes max(old best, current_sum) = ${maxSum}.`,
+          movement: currentSum === maxSum ? `Best may update to ${maxSum}` : `Best remains ${maxSum}`,
+          currentSum,
+          maxSum,
+          currentStart,
+          currentEnd,
+          bestStart,
+          bestEnd
+        }));
+      }
+
+      localSteps.push(snapshot({
+        arr,
+        line: 10,
+        text: `Kadane is complete. Maximum subarray sum = ${maxSum}, from index ${bestStart} to ${bestEnd}.`,
+        movement: 'Final answer ready',
+        currentSum,
+        maxSum,
+        currentStart,
+        currentEnd,
+        bestStart,
+        bestEnd
+      }));
+
+      return localSteps;
+    }
+
+    function renderCode(variant, activeLine) {
+      const lines = buildCodeLines(variant);
+      codeWindow.innerHTML = '';
+
+      lines.forEach((content, index) => {
+        const lineNumber = index + 1;
+        const row = document.createElement('div');
+        row.className = 'code-line';
+        if (lineNumber === activeLine) row.classList.add('active');
+        if (lineNumber < activeLine) row.classList.add('done');
+
+        row.innerHTML = `
+          <div class="line-num">${lineNumber}</div>
+          <div>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        `;
+        codeWindow.appendChild(row);
+      });
+    }
+
+    function appendRowTitle(text) {
+      const title = document.createElement('div');
+      title.className = 'row-title';
+      title.textContent = text;
+      arrayWrap.appendChild(title);
+    }
+
+    function appendArrayRow(values, step) {
+      values.forEach((value, index) => {
+        const block = document.createElement('div');
+        block.className = 'cell-block';
+
+        if (index === step.activeIndex) block.classList.add('active');
+        if (index >= step.currentStart && index <= step.currentEnd && step.currentSum !== null) block.classList.add('current-range');
+        if (index >= step.bestStart && index <= step.bestEnd && step.maxSum !== null) block.classList.add('best');
+        if (step.activeIndex !== null && index !== step.activeIndex && !(index >= step.bestStart && index <= step.bestEnd) && !(index >= step.currentStart && index <= step.currentEnd)) {
+          block.classList.add('dim');
+        }
+
+        block.innerHTML = `
+          <div class="index-label">index ${index}</div>
+          <div class="cell">${value}</div>
+        `;
+        arrayWrap.appendChild(block);
+      });
+    }
+
+    function renderArray(step) {
+      arrayWrap.innerHTML = '';
+      appendRowTitle('Array values');
+      appendArrayRow(step.arr, step);
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const step = steps[currentStep];
+      renderArray(step);
+      renderCode(variantSelect.value, step.line);
+      explainText.innerHTML = step.text;
+      stepValue.textContent = `${currentStep + 1} / ${steps.length}`;
+      currentSumValue.textContent = step.currentSum ?? '—';
+      bestSumValue.textContent = step.maxSum ?? '—';
+      movementValue.textContent = step.movement ?? '—';
+      resultBadge.textContent = currentStep === steps.length - 1 ? 'Kadane complete' : 'Visualizing step by step';
+      algoBadge.textContent = variantSelect.value === 'classic' ? 'Classic max formula' : 'Reset-or-extend branch method';
+    }
+
+    function stopPlay() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        playBtn.textContent = 'Play';
+      }
+    }
+
+    function buildDemo() {
+      stopPlay();
+      const arr = parseArray();
+
+      if (!arr.length || arr.some(Number.isNaN)) {
+        explainText.innerHTML = 'Please enter a valid numeric array like <strong>-2, 1, -3, 4</strong>.';
+        arrayWrap.innerHTML = '';
+        codeWindow.innerHTML = '';
+        stepValue.textContent = '0 / 0';
+        lengthValue.textContent = '0';
+        currentSumValue.textContent = '—';
+        bestSumValue.textContent = '—';
+        movementValue.textContent = '—';
+        resultBadge.textContent = 'Invalid input';
+        return;
+      }
+
+      lengthValue.textContent = arr.length;
+      steps = variantSelect.value === 'classic' ? generateClassicSteps(arr) : generateBranchSteps(arr);
+      currentStep = 0;
+      renderStep();
+    }
+
+    prevBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.max(0, currentStep - 1);
+      renderStep();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.min(steps.length - 1, currentStep + 1);
+      renderStep();
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (!steps.length) buildDemo();
+      if (!steps.length) return;
+
+      if (timer) {
+        stopPlay();
+        return;
+      }
+
+      playBtn.textContent = 'Pause';
+      timer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          stopPlay();
+          return;
+        }
+        currentStep += 1;
+        renderStep();
+      }, 1300);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      stopPlay();
+      currentStep = 0;
+      if (steps.length) renderStep();
+    });
+
+    buildBtn.addEventListener('click', buildDemo);
+    variantSelect.addEventListener('change', buildDemo);
+
+    buildDemo();
+  </script>
+</body>
+</html>

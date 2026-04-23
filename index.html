@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA : Open Source</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-strong: rgba(15, 23, 42, 0.95);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5eefb;
+      --muted: #9fb0cc;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 24px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), transparent 28%),
+        radial-gradient(circle at top right, rgba(6, 182, 212, 0.22), transparent 25%),
+        linear-gradient(160deg, #020617 0%, #0b1020 45%, #111827 100%);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      flex: 1;
+      display: grid;
+      gap: 30px;
+      align-content: start;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(6, 182, 212, 0.12));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 40px 28px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .hero h1 {
+      margin: 0 0 16px;
+      font-size: clamp(2.5rem, 4vw, 4rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff, #9fb0cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      margin: 0 auto;
+      color: var(--muted);
+      max-width: 700px;
+      font-size: 1.1rem;
+      line-height: 1.6;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 26px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+
+    .panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    .panel h2 {
+      margin: 0 0 20px;
+      font-size: 1.4rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel h2::before {
+      content: '';
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    }
+
+    .link-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .link-list li {
+      margin: 0;
+    }
+
+    .link-list a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      text-decoration: none;
+      color: var(--text);
+      padding: 16px;
+      background: rgba(2, 6, 23, 0.65);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 16px;
+      transition: all 160ms ease;
+      font-weight: 500;
+    }
+
+    .link-list a::after {
+      content: '→';
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 160ms ease;
+      color: var(--accent-2);
+      font-weight: bold;
+    }
+
+    .link-list a:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #fff;
+    }
+
+    .link-list a:hover::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    footer {
+      margin-top: 60px;
+      text-align: center;
+      padding: 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      border-top: 1px solid var(--border);
+    }
+
+    footer .heart {
+      color: var(--danger);
+      display: inline-block;
+      animation: beat 1.5s infinite;
+    }
+
+    @keyframes beat {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .hero { padding: 30px 20px; }
+      .content-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>DSA : Open Source</h1>
+      <p>
+        A curated collection of Data Structures and Algorithms visualizers and implementations.
+        Explore the interactive pages below to master algorithmic concepts step by step.
+      </p>
+    </section>
+
+    <div class="content-grid" id="contentGrid">
+      <!-- Panels will be generated here dynamically -->
+    </div>
+  </div>
+
+  <footer>
+    Curated with <span class="heart">♥</span> by <strong>Aniket Maithani</strong> • Open Source DSA
+  </footer>
+
+  <script>
+    async function loadConfig() {
+      const container = document.getElementById('contentGrid');
+      try {
+        // We will fetch config.md and parse it
+        const resp = await fetch('config.md');
+        if (!resp.ok) {
+          throw new Error('Could not load config.md. Make sure you are serving this via a local web server.');
+        }
+        const text = await resp.text();
+        
+        const lines = text.split('\n');
+        let currentBox = null;
+        let currentList = null;
+
+        for (let line of lines) {
+          line = line.trim();
+          if (!line) continue;
+
+          if (line.startsWith('# ')) {
+            // New Category Panel
+            currentBox = document.createElement('div');
+            currentBox.className = 'panel';
+            
+            const title = document.createElement('h2');
+            title.textContent = line.substring(2);
+            currentBox.appendChild(title);
+            
+            currentList = document.createElement('ul');
+            currentList.className = 'link-list';
+            currentBox.appendChild(currentList);
+            
+            container.appendChild(currentBox);
+          } else if (line.startsWith('- ')) {
+            if (currentList) {
+              const li = document.createElement('li');
+              const itemText = line.substring(2).trim();
+              
+              // Extract .html file name if present
+              const htmlMatch = itemText.match(/([a-zA-Z0-9_\-\./]+\.html)/);
+              if (htmlMatch) {
+                const url = htmlMatch[1];
+                let label = itemText.replace(url, '').replace(/[()\[\]]/g, '').trim();
+                // Clean up trailing dash or colon if user put one
+                if (label.endsWith('-') || label.endsWith(':')) {
+                  label = label.slice(0, -1).trim();
+                }
+                
+                // If label is empty, use the url as label
+                if (!label) label = url;
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.textContent = label;
+                li.appendChild(a);
+              } else {
+                li.textContent = itemText;
+              }
+              currentList.appendChild(li);
+            }
+          }
+        }
+        
+        if (container.children.length === 0) {
+          container.innerHTML = '<div class="panel"><h2>No config found</h2><p>config.md is empty or not formatted correctly.</p></div>';
+        }
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `
+          <div class="panel">
+            <h2>Setup Notice</h2>
+            <p>Could not load <strong>config.md</strong>. To test this locally, you need a local web server (e.g. <code>python -m http.server</code>) because browsers block fetch requests for local files.</p>
+            <p style="margin-top:20px; color:var(--muted); font-size: 0.9em">If you have a server running, make sure config.md exists in the same folder.</p>
+          </div>
+        `;
+      }
+    }
+
+    loadConfig();
+  </script>
+</body>
+</html>
