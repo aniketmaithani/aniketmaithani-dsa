@@ -5,3 +5,5 @@
 - Prefix Sum (prefix_sum_visualizer.html)
 - Kadane's Algorithm (kadane_visualizer.html)
 - Sliding Window Fixed (sliding_window_fixed_visualizer.html)
+- Sliding Window Variable (sliding_window_variable_visualizer.html)
+- Two Pointers (two_pointers_visualizer.html)

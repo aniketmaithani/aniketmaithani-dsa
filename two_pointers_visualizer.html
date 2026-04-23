@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Two Pointers Visualizer</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(15, 23, 42, 0.78);
+      --panel-strong: rgba(15, 23, 42, 0.95);
+      --border: rgba(148, 163, 184, 0.18);
+      --text: #e5eefb;
+      --muted: #9fb0cc;
+      --accent: #7c3aed;
+      --accent-2: #06b6d4;
+      --good: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 24px;
+      --cell-size: 64px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(124, 58, 237, 0.25), transparent 28%),
+        radial-gradient(circle at top right, rgba(6, 182, 212, 0.22), transparent 25%),
+        linear-gradient(160deg, #020617 0%, #0b1020 45%, #111827 100%);
+      padding: 28px;
+    }
+
+    .shell {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      gap: 20px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.18), rgba(6, 182, 212, 0.12));
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 28px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 980px;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+
+    label {
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    input, select {
+      width: 100%;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(2, 6, 23, 0.65);
+      color: var(--text);
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 1rem;
+      outline: none;
+      transition: 160ms ease;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(99, 102, 241, 0.65);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: white;
+      transition: transform 120ms ease, opacity 120ms ease, box-shadow 160ms ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary { background: linear-gradient(135deg, var(--accent), #4f46e5); }
+    .secondary { background: linear-gradient(135deg, #0f172a, #1e293b); border: 1px solid var(--border); }
+    .cyan { background: linear-gradient(135deg, var(--accent-2), #0284c7); }
+    .green { background: linear-gradient(135deg, var(--good), #15803d); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .stat {
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .stat .value {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .workspace {
+      display: grid;
+      gap: 20px;
+    }
+
+    .array-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 20px;
+    }
+
+    .array-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .array-header h3, .code-card h3, .explain-card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.12);
+      color: #c7d2fe;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 0.85rem;
+    }
+
+    .row-title {
+      width: 100%;
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-size: 0.92rem;
+    }
+
+    .array-wrap {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+
+    .cell-block {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      transition: transform 260ms ease, opacity 260ms ease;
+    }
+
+    .index-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border-radius: 18px;
+      display: grid;
+      place-items: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.92));
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 12px 25px rgba(0,0,0,0.22);
+    }
+
+    .cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), transparent 45%);
+      pointer-events: none;
+    }
+
+    .cell-block.left-pointer .cell {
+      border-color: rgba(6, 182, 212, 0.9);
+      box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.18), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.right-pointer .cell {
+      border-color: rgba(245, 158, 11, 0.9);
+      box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.14), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.answer .cell {
+      border-color: rgba(34, 197, 94, 0.82);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.range .cell {
+      border-color: rgba(124, 58, 237, 0.88);
+      box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.14), 0 12px 30px rgba(0,0,0,0.24);
+    }
+
+    .cell-block.dim {
+      opacity: 0.4;
+    }
+
+    .pointer-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      min-height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .temp-slot {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .mini-box {
+      min-width: 155px;
+      background: rgba(2, 6, 23, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .mini-box .small {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .mini-box .big {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .lower-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    .code-card, .explain-card {
+      background: var(--panel-strong);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    .code-head, .explain-head {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .code-window {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      padding: 10px;
+      max-height: 560px;
+      overflow: auto;
+      background: linear-gradient(180deg, rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.95));
+    }
+
+    .code-line {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #dbeafe;
+      transition: background 180ms ease, transform 180ms ease, opacity 180ms ease;
+      white-space: pre-wrap;
+    }
+
+    .code-line.active {
+      background: linear-gradient(90deg, rgba(124, 58, 237, 0.22), rgba(6, 182, 212, 0.14));
+      outline: 1px solid rgba(99, 102, 241, 0.28);
+      transform: translateX(2px);
+    }
+
+    .code-line.done {
+      opacity: 0.72;
+    }
+
+    .line-num {
+      color: #64748b;
+      text-align: right;
+      user-select: none;
+    }
+
+    .explain-body {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .explain-text {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.98rem;
+      min-height: 140px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .dot.left { background: var(--accent-2); }
+    .dot.right { background: var(--warn); }
+    .dot.answer { background: var(--good); }
+    .dot.range { background: var(--accent); }
+
+    .footer-note {
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: rgba(2, 6, 23, 0.45);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      border-radius: 18px;
+    }
+
+    @media (max-width: 1100px) {
+      .grid, .lower-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 16px; }
+      .hero, .panel, .array-card, .code-card, .explain-card { padding-left: 16px; padding-right: 16px; }
+      .code-head, .explain-head { padding-left: 16px; padding-right: 16px; }
+      .cell { width: 54px; height: 54px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero">
+      <h1>Two Pointers Visualizer</h1>
+      <p>
+        Learn the classic <strong>Two Sum in a sorted array</strong> pattern using two pointers. One pointer starts from the left, the other from the right. Based on the current sum, we move exactly one pointer inward. This is one of the cleanest two-pointer problems for beginners.
+      </p>
+    </section>
+
+    <section class="grid">
+      <aside class="panel">
+        <h2>Controls</h2>
+        <div class="controls">
+          <div class="control-group">
+            <label for="arrayInput">Sorted array values</label>
+            <input id="arrayInput" value="1, 2, 3, 4, 6" />
+          </div>
+
+          <div class="control-group">
+            <label for="targetInput">Target sum</label>
+            <input id="targetInput" type="number" value="6" />
+          </div>
+
+          <div class="control-group">
+            <label for="exampleSelect">Quick examples</label>
+            <select id="exampleSelect">
+              <option value="1,2,3,4,6|6">Example 1: [1,2,3,4,6], target = 6</option>
+              <option value="2,5,9,11|11">Example 2: [2,5,9,11], target = 11</option>
+              <option value="1,3,4,5,7,10,11|9">Example 3: [1,3,4,5,7,10,11], target = 9</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button class="primary" id="buildBtn">Build demo</button>
+            <button class="secondary" id="prevBtn">Previous</button>
+            <button class="cyan" id="nextBtn">Next</button>
+            <button class="green" id="playBtn">Play</button>
+            <button class="secondary" id="resetBtn">Reset</button>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="label">Current step</div>
+              <div class="value" id="stepValue">0 / 0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Length / target</div>
+              <div class="value" id="lengthValue">0 / 0</div>
+            </div>
+            <div class="stat">
+              <div class="label">Time complexity</div>
+              <div class="value">O(n)</div>
+            </div>
+            <div class="stat">
+              <div class="label">Extra space</div>
+              <div class="value">O(1)</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <section class="array-card">
+          <div class="array-header">
+            <h3>Live Pointer State</h3>
+            <div class="badge" id="resultBadge">Ready to visualize</div>
+          </div>
+          <div class="array-wrap" id="arrayWrap"></div>
+
+          <div class="temp-slot">
+            <div class="mini-box">
+              <div class="small">Left pointer</div>
+              <div class="big" id="leftValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Right pointer</div>
+              <div class="big" id="rightValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Current sum</div>
+              <div class="big" id="sumValue">—</div>
+            </div>
+            <div class="mini-box">
+              <div class="small">Current movement</div>
+              <div class="big" id="movementValue">—</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="lower-grid">
+          <section class="code-card">
+            <div class="code-head">
+              <h3>Code Execution</h3>
+              <span class="badge">Opposite-end pointers</span>
+            </div>
+            <div class="code-window" id="codeWindow"></div>
+          </section>
+
+          <section class="explain-card">
+            <div class="explain-head">
+              <h3>What is happening</h3>
+              <div class="legend">
+                <div class="legend-item"><span class="dot left"></span>Left pointer</div>
+                <div class="legend-item"><span class="dot right"></span>Right pointer</div>
+                <div class="legend-item"><span class="dot answer"></span>Answer pair</div>
+                <div class="legend-item"><span class="dot range"></span>Current search space</div>
+              </div>
+            </div>
+            <div class="explain-body">
+              <div class="explain-text" id="explainText">
+                Enter values and press <strong>Build demo</strong> to generate a two-pointers walkthrough.
+              </div>
+              <div class="footer-note">
+                Two pointers idea here:<br />
+                <strong>If sum is too small, move left pointer right.</strong><br />
+                <strong>If sum is too large, move right pointer left.</strong><br />
+                Because the array is sorted, each move is meaningful.
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const arrayInput = document.getElementById('arrayInput');
+    const targetInput = document.getElementById('targetInput');
+    const exampleSelect = document.getElementById('exampleSelect');
+    const buildBtn = document.getElementById('buildBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const arrayWrap = document.getElementById('arrayWrap');
+    const codeWindow = document.getElementById('codeWindow');
+    const explainText = document.getElementById('explainText');
+    const stepValue = document.getElementById('stepValue');
+    const lengthValue = document.getElementById('lengthValue');
+    const leftValue = document.getElementById('leftValue');
+    const rightValue = document.getElementById('rightValue');
+    const sumValue = document.getElementById('sumValue');
+    const movementValue = document.getElementById('movementValue');
+    const resultBadge = document.getElementById('resultBadge');
+
+    let steps = [];
+    let currentStep = 0;
+    let timer = null;
+
+    function parseArray() {
+      return arrayInput.value
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => Number(item));
+    }
+
+    function buildCodeLines() {
+      return [
+        'arr = [ ... ]',
+        'left = 0',
+        'right = len(arr) - 1',
+        'while left < right:',
+        '    current_sum = arr[left] + arr[right]',
+        '    if current_sum == target:',
+        '        return [left, right]',
+        '    elif current_sum < target:',
+        '        left += 1',
+        '    else:',
+        '        right -= 1',
+        'return [-1, -1]'
+      ];
+    }
+
+    function snapshot({
+      arr,
+      line,
+      text,
+      movement = null,
+      left = null,
+      right = null,
+      currentSum = null,
+      answerLeft = null,
+      answerRight = null
+    }) {
+      return {
+        arr: [...arr],
+        line,
+        text,
+        movement,
+        left,
+        right,
+        currentSum,
+        answerLeft,
+        answerRight
+      };
+    }
+
+    function generateSteps(arr, target) {
+      const localSteps = [];
+      let left = 0;
+      let right = arr.length - 1;
+      let answerLeft = null;
+      let answerRight = null;
+
+      localSteps.push(snapshot({
+        arr,
+        line: 1,
+        text: 'We start with a sorted array and want two numbers whose sum equals the target.',
+        movement: 'Initial state'
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        line: 2,
+        text: 'left starts from index 0, the beginning of the array.',
+        movement: 'left = 0',
+        left,
+        right
+      }));
+
+      localSteps.push(snapshot({
+        arr,
+        line: 3,
+        text: `right starts from the last index, so right = ${right}.`,
+        movement: `right = ${right}`,
+        left,
+        right
+      }));
+
+      while (left < right) {
+        localSteps.push(snapshot({
+          arr,
+          line: 4,
+          text: `We continue because left (${left}) is still less than right (${right}).`,
+          movement: `Checking pair [${left}, ${right}]`,
+          left,
+          right,
+          answerLeft,
+          answerRight
+        }));
+
+        const currentSum = arr[left] + arr[right];
+
+        localSteps.push(snapshot({
+          arr,
+          line: 5,
+          text: `Current sum = arr[${left}] + arr[${right}] = ${arr[left]} + ${arr[right]} = ${currentSum}.`,
+          movement: `${arr[left]} + ${arr[right]} = ${currentSum}`,
+          left,
+          right,
+          currentSum,
+          answerLeft,
+          answerRight
+        }));
+
+        if (currentSum === target) {
+          answerLeft = left;
+          answerRight = right;
+
+          localSteps.push(snapshot({
+            arr,
+            line: 6,
+            text: `current_sum equals target ${target}, so we found the answer pair.`,
+            movement: 'Condition true: found answer',
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+
+          localSteps.push(snapshot({
+            arr,
+            line: 7,
+            text: `Return indices [${left}, ${right}] or values [${arr[left]}, ${arr[right]}].`,
+            movement: 'Answer ready',
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+
+          return localSteps;
+        }
+
+        if (currentSum < target) {
+          localSteps.push(snapshot({
+            arr,
+            line: 8,
+            text: `${currentSum} is smaller than target ${target}. We need a bigger sum.`,
+            movement: 'Sum too small',
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+
+          left += 1;
+
+          localSteps.push(snapshot({
+            arr,
+            line: 9,
+            text: `Move left pointer ahead to ${left} so that we try a larger value on the left side.`,
+            movement: `left moved to ${left}`,
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+        } else {
+          localSteps.push(snapshot({
+            arr,
+            line: 10,
+            text: `${currentSum} is larger than target ${target}. We need a smaller sum.`,
+            movement: 'Sum too large',
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+
+          right -= 1;
+
+          localSteps.push(snapshot({
+            arr,
+            line: 11,
+            text: `Move right pointer left to ${right} so that we try a smaller value on the right side.`,
+            movement: `right moved to ${right}`,
+            left,
+            right,
+            currentSum,
+            answerLeft,
+            answerRight
+          }));
+        }
+      }
+
+      localSteps.push(snapshot({
+        arr,
+        line: 12,
+        text: 'Pointers crossed without finding a valid pair, so answer is [-1, -1].',
+        movement: 'No answer found',
+        left,
+        right,
+        answerLeft,
+        answerRight
+      }));
+
+      return localSteps;
+    }
+
+    function renderCode(activeLine) {
+      const lines = buildCodeLines();
+      codeWindow.innerHTML = '';
+
+      lines.forEach((content, index) => {
+        const lineNumber = index + 1;
+        const row = document.createElement('div');
+        row.className = 'code-line';
+        if (lineNumber === activeLine) row.classList.add('active');
+        if (lineNumber < activeLine) row.classList.add('done');
+
+        row.innerHTML = `
+          <div class="line-num">${lineNumber}</div>
+          <div>${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        `;
+        codeWindow.appendChild(row);
+      });
+    }
+
+    function appendRowTitle(text) {
+      const title = document.createElement('div');
+      title.className = 'row-title';
+      title.textContent = text;
+      arrayWrap.appendChild(title);
+    }
+
+    function appendArrayRow(values, step) {
+      values.forEach((value, index) => {
+        const block = document.createElement('div');
+        block.className = 'cell-block';
+
+        const inRange = step.left !== null && step.right !== null && index >= step.left && index <= step.right;
+        const isAnswer = (index === step.answerLeft || index === step.answerRight) && step.answerLeft !== null;
+
+        if (inRange) block.classList.add('range');
+        if (index === step.left) block.classList.add('left-pointer');
+        if (index === step.right) block.classList.add('right-pointer');
+        if (isAnswer) block.classList.add('answer');
+        if (!inRange && step.left !== null && step.right !== null) block.classList.add('dim');
+
+        let tag = '';
+        if (index === step.left && index === step.right) tag = 'L/R';
+        else if (index === step.left) tag = 'LEFT';
+        else if (index === step.right) tag = 'RIGHT';
+        else if (isAnswer) tag = 'PAIR';
+
+        block.innerHTML = `
+          <div class="pointer-tag">${tag || '&nbsp;'}</div>
+          <div class="index-label">index ${index}</div>
+          <div class="cell">${value}</div>
+        `;
+        arrayWrap.appendChild(block);
+      });
+    }
+
+    function renderArray(step) {
+      arrayWrap.innerHTML = '';
+      appendRowTitle('Sorted array with left and right pointers');
+      appendArrayRow(step.arr, step);
+    }
+
+    function renderStep() {
+      if (!steps.length) return;
+      const step = steps[currentStep];
+      renderArray(step);
+      renderCode(step.line);
+      explainText.innerHTML = step.text;
+      stepValue.textContent = `${currentStep + 1} / ${steps.length}`;
+      leftValue.textContent = step.left ?? '—';
+      rightValue.textContent = step.right ?? '—';
+      sumValue.textContent = step.currentSum ?? '—';
+      movementValue.textContent = step.movement ?? '—';
+      resultBadge.textContent = currentStep === steps.length - 1 ? 'Two pointers complete' : 'Visualizing step by step';
+    }
+
+    function stopPlay() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+        playBtn.textContent = 'Play';
+      }
+    }
+
+    function buildDemo() {
+      stopPlay();
+      const arr = parseArray();
+      const target = Number(targetInput.value);
+
+      if (!arr.length || arr.some(Number.isNaN)) {
+        explainText.innerHTML = 'Please enter a valid numeric array like <strong>1, 2, 3, 4, 6</strong>.';
+        arrayWrap.innerHTML = '';
+        codeWindow.innerHTML = '';
+        stepValue.textContent = '0 / 0';
+        lengthValue.textContent = '0 / 0';
+        leftValue.textContent = '—';
+        rightValue.textContent = '—';
+        sumValue.textContent = '—';
+        movementValue.textContent = '—';
+        resultBadge.textContent = 'Invalid input';
+        return;
+      }
+
+      for (let i = 1; i < arr.length; i++) {
+        if (arr[i] < arr[i - 1]) {
+          explainText.innerHTML = 'This example requires a <strong>sorted array</strong>. Please enter values in non-decreasing order.';
+          arrayWrap.innerHTML = '';
+          codeWindow.innerHTML = '';
+          resultBadge.textContent = 'Array not sorted';
+          return;
+        }
+      }
+
+      if (Number.isNaN(target)) {
+        explainText.innerHTML = 'Please enter a valid numeric target.';
+        arrayWrap.innerHTML = '';
+        codeWindow.innerHTML = '';
+        resultBadge.textContent = 'Invalid target';
+        return;
+      }
+
+      lengthValue.textContent = `${arr.length} / ${target}`;
+      steps = generateSteps(arr, target);
+      currentStep = 0;
+      renderStep();
+    }
+
+    prevBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.max(0, currentStep - 1);
+      renderStep();
+    });
+
+    nextBtn.addEventListener('click', () => {
+      stopPlay();
+      if (!steps.length) return;
+      currentStep = Math.min(steps.length - 1, currentStep + 1);
+      renderStep();
+    });
+
+    playBtn.addEventListener('click', () => {
+      if (!steps.length) buildDemo();
+      if (!steps.length) return;
+
+      if (timer) {
+        stopPlay();
+        return;
+      }
+
+      playBtn.textContent = 'Pause';
+      timer = setInterval(() => {
+        if (currentStep >= steps.length - 1) {
+          stopPlay();
+          return;
+        }
+        currentStep += 1;
+        renderStep();
+      }, 1300);
+    });
+
+    resetBtn.addEventListener('click', () => {
+      stopPlay();
+      currentStep = 0;
+      if (steps.length) renderStep();
+    });
+
+    buildBtn.addEventListener('click', buildDemo);
+
+    exampleSelect.addEventListener('change', () => {
+      const [arrText, targetText] = exampleSelect.value.split('|');
+      arrayInput.value = arrText;
+      targetInput.value = targetText;
+      buildDemo();
+    });
+
+    buildDemo();
+  </script>
+</body>
+</html>
