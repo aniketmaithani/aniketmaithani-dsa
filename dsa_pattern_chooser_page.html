@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DSA Pattern Chooser: Prefix Sum, Kadane, Two Pointers, Sliding Window</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: rgba(255,255,255,0.08);
+      --card-2: rgba(255,255,255,0.12);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --line: rgba(255,255,255,0.16);
+      --accent: #7dd3fc;
+      --accent-2: #c084fc;
+      --good: #86efac;
+      --warn: #fde68a;
+      --bad: #fca5a5;
+      --code: #111827;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,0.24), transparent 28rem),
+        radial-gradient(circle at top right, rgba(192,132,252,0.22), transparent 30rem),
+        linear-gradient(135deg, #020617, #0f172a 48%, #111827);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+
+    .hero {
+      padding: 64px 0 32px;
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1.35fr 0.65fr;
+      align-items: stretch;
+    }
+
+    .hero-card, .glass-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      box-shadow: 0 24px 80px rgba(0,0,0,0.32);
+      backdrop-filter: blur(18px);
+      border-radius: 28px;
+    }
+
+    .hero-card { padding: 34px; }
+    .mini-card { padding: 24px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.06);
+      font-size: 13px;
+      margin-bottom: 18px;
+    }
+
+    h1 { font-size: clamp(34px, 5vw, 66px); line-height: 1.02; margin: 0 0 16px; letter-spacing: -0.05em; }
+    h2 { font-size: clamp(25px, 3vw, 38px); line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.03em; }
+    h3 { font-size: 22px; margin: 0 0 10px; }
+    p { color: var(--muted); margin: 0 0 14px; }
+
+    .hero p.big { font-size: 18px; max-width: 760px; }
+
+    .pill-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .pill {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.07);
+      color: #e2e8f0;
+      padding: 9px 12px;
+      border-radius: 999px;
+      font-size: 14px;
+    }
+
+    .stats { display: grid; gap: 12px; height: 100%; }
+    .stat { padding: 22px; border-radius: 24px; background: var(--card); border: 1px solid var(--line); }
+    .stat strong { display: block; font-size: 32px; line-height: 1; }
+    .stat span { color: var(--muted); font-size: 14px; }
+
+    .section { padding: 28px 0; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+
+    .glass-card { padding: 24px; }
+
+    .decision-table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 22px; }
+    .decision-table th, .decision-table td { padding: 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .decision-table th { text-align: left; color: #e0f2fe; background: rgba(125,211,252,0.10); }
+    .decision-table tr:last-child td { border-bottom: 0; }
+    .decision-table td { color: var(--muted); }
+    .decision-table b { color: var(--text); }
+
+    .algo-card { position: relative; overflow: hidden; }
+    .algo-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(125,211,252,0.12), transparent 18rem);
+      pointer-events: none;
+    }
+    .algo-card > * { position: relative; }
+
+    .tag {
+      display: inline-flex;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      color: #e2e8f0;
+      margin: 0 6px 8px 0;
+    }
+
+    ul { padding-left: 22px; margin: 10px 0 0; color: var(--muted); }
+    li { margin: 7px 0; }
+    li strong { color: var(--text); }
+
+    .code {
+      margin-top: 14px;
+      background: var(--code);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .code-title { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.12); color: #bae6fd; font-size: 13px; }
+    pre { margin: 0; padding: 16px; overflow-x: auto; color: #e5e7eb; font-size: 13px; line-height: 1.55; }
+
+    .problems { display: grid; gap: 12px; margin-top: 14px; }
+    .problem {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--line);
+    }
+    .problem .meta { color: var(--muted); font-size: 13px; }
+    .difficulty { font-weight: 800; }
+    .easy { color: var(--good); }
+    .medium { color: var(--warn); }
+    .hard { color: var(--bad); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .flow div {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      min-height: 140px;
+    }
+    .flow b { display: block; color: var(--text); margin-bottom: 6px; }
+
+    .footer { padding: 40px 0 64px; color: var(--muted); }
+
+    @media (max-width: 900px) {
+      .hero, .grid, .grid-3 { grid-template-columns: 1fr; }
+      .flow { grid-template-columns: 1fr; }
+      .decision-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">🧠 DSA Pattern Chooser for Freshers</div>
+        <h1>When to use Prefix Sum, Kadane, Two Pointers and Sliding Window</h1>
+        <p class="big">Do not memorize algorithms blindly. First read the problem statement and identify the signal words. This page helps you decide which pattern fits the problem.</p>
+        <div class="pill-row">
+          <span class="pill">Range sum?</span>
+          <span class="pill">Maximum subarray?</span>
+          <span class="pill">Sorted array?</span>
+          <span class="pill">Contiguous window?</span>
+          <span class="pill">Substring/subarray condition?</span>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><strong>5</strong><span>Patterns covered including fixed and variable sliding window</span></div>
+        <div class="stat"><strong>10</strong><span>Practice problems, 2 for each pattern</span></div>
+        <div class="stat"><strong>O(n)</strong><span>Most optimized solutions reduce brute force to linear time</span></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="glass-card">
+        <h2>Fast decision table</h2>
+        <p>Before coding, ask: “What is changing when I move through the array?”</p>
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Problem signal</th>
+              <th>Use this pattern</th>
+              <th>Why?</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>Many range sum queries</b>, sum from index L to R, repeated subarray sum checks</td>
+              <td>Prefix Sum</td>
+              <td>Precompute running totals once, then answer range sums quickly.</td>
+            </tr>
+            <tr>
+              <td><b>Maximum or minimum contiguous subarray</b>, can include negative numbers</td>
+              <td>Kadane's Algorithm</td>
+              <td>Carry the best subarray ending at current index. Drop bad history when it hurts future sum.</td>
+            </tr>
+            <tr>
+              <td><b>Sorted array</b>, pair/triplet search, palindrome, opposite ends movement</td>
+              <td>Two Pointers</td>
+              <td>Move left/right intelligently instead of checking every pair.</td>
+            </tr>
+            <tr>
+              <td><b>Fixed size k</b>, maximum/minimum/average of every window of size k</td>
+              <td>Fixed Sliding Window</td>
+              <td>Maintain one window, remove outgoing element, add incoming element.</td>
+            </tr>
+            <tr>
+              <td><b>Longest/shortest subarray or substring</b> satisfying a condition</td>
+              <td>Variable Sliding Window</td>
+              <td>Expand right pointer, shrink left pointer only when condition breaks or becomes enough.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>The beginner rule</h2>
+      <div class="flow">
+        <div><b>1. Is it contiguous?</b>If the problem says subarray or substring, think Kadane or Sliding Window first.</div>
+        <div><b>2. Is size fixed?</b>If size k is fixed, use fixed sliding window.</div>
+        <div><b>3. Is size flexible?</b>If asked longest/shortest with condition, use variable sliding window.</div>
+        <div><b>4. Is it range query?</b>If repeated sum from L to R is needed, use prefix sum.</div>
+        <div><b>5. Is array sorted?</b>If yes and pair/triplet is needed, try two pointers.</div>
+      </div>
+    </section>
+
+    <section class="section grid">
+      <article class="glass-card algo-card">
+        <h2>1. Prefix Sum</h2>
+        <span class="tag">Range sum</span><span class="tag">Subarray sum</span><span class="tag">Precomputation</span>
+        <p><strong>Use when:</strong> You need sum of elements between two indexes again and again, or you need to detect whether some previous prefix can help form a target sum.</p>
+        <ul>
+          <li><strong>Best signal:</strong> “sum from left to right”, “range query”, “subarray sum equals k”.</li>
+          <li><strong>Brute force:</strong> Sum every range again, often O(n²) or O(q × n).</li>
+          <li><strong>Optimized:</strong> Build prefix once in O(n), then answer range sum in O(1).</li>
+          <li><strong>Common trap:</strong> For subarray sum equals k with negative numbers, normal sliding window may fail. Prefix sum + hashmap is safer.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Python template</div>
+          <pre><code>prefix = [0]
+for num in nums:
+    prefix.append(prefix[-1] + num)
+
+# sum from left to right inclusive
+range_sum = prefix[right + 1] - prefix[left]</code></pre>
+        </div>
+        <div class="problems">
+          <div class="problem"><a href="https://leetcode.com/problems/range-sum-query-immutable/" target="_blank">LC 303. Range Sum Query - Immutable</a><div class="meta"><span class="difficulty easy">Easy</span> · Classic prefix sum starter</div></div>
+          <div class="problem"><a href="https://leetcode.com/problems/subarray-sum-equals-k/" target="_blank">LC 560. Subarray Sum Equals K</a><div class="meta"><span class="difficulty medium">Medium</span> · Prefix sum + hashmap</div></div>
+        </div>
+      </article>
+
+      <article class="glass-card algo-card">
+        <h2>2. Kadane's Algorithm</h2>
+        <span class="tag">Maximum subarray</span><span class="tag">Contiguous</span><span class="tag">Negative numbers</span>
+        <p><strong>Use when:</strong> You need the best contiguous subarray sum/product and each index asks: should I extend previous subarray or start fresh?</p>
+        <ul>
+          <li><strong>Best signal:</strong> “maximum subarray”, “largest sum contiguous subarray”.</li>
+          <li><strong>Core thought:</strong> A negative past can hurt the future, so drop it.</li>
+          <li><strong>Time complexity:</strong> O(n), because each element is processed once.</li>
+          <li><strong>Common trap:</strong> Initialize with nums[0], not 0, otherwise all-negative arrays break.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Python template</div>
+          <pre><code>best = nums[0]
+current = nums[0]
+
+for i in range(1, len(nums)):
+    current = max(nums[i], current + nums[i])
+    best = max(best, current)
+
+return best</code></pre>
+        </div>
+        <div class="problems">
+          <div class="problem"><a href="https://leetcode.com/problems/maximum-subarray/" target="_blank">LC 53. Maximum Subarray</a><div class="meta"><span class="difficulty medium">Medium</span> · Pure Kadane</div></div>
+          <div class="problem"><a href="https://leetcode.com/problems/maximum-product-subarray/" target="_blank">LC 152. Maximum Product Subarray</a><div class="meta"><span class="difficulty medium">Medium</span> · Kadane variation with max/min product</div></div>
+        </div>
+      </article>
+
+      <article class="glass-card algo-card">
+        <h2>3. Two Pointers</h2>
+        <span class="tag">Sorted array</span><span class="tag">Pairs</span><span class="tag">Opposite ends</span>
+        <p><strong>Use when:</strong> Two positions move through the array/string and each movement removes useless possibilities.</p>
+        <ul>
+          <li><strong>Best signal:</strong> Sorted array, pair sum, palindrome, left/right boundary.</li>
+          <li><strong>Typical movement:</strong> If sum is too small, move left. If sum is too large, move right.</li>
+          <li><strong>Time complexity:</strong> Usually O(n), because every pointer moves at most n times.</li>
+          <li><strong>Common trap:</strong> Do not use two pointers blindly on unsorted pair-sum problems unless sorting is allowed.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Python template for sorted pair sum</div>
+          <pre><code>left, right = 0, len(nums) - 1
+
+while left < right:
+    total = nums[left] + nums[right]
+    if total == target:
+        return [left, right]
+    elif total < target:
+        left += 1
+    else:
+        right -= 1</code></pre>
+        </div>
+        <div class="problems">
+          <div class="problem"><a href="https://leetcode.com/problems/valid-palindrome/" target="_blank">LC 125. Valid Palindrome</a><div class="meta"><span class="difficulty easy">Easy</span> · String two pointers</div></div>
+          <div class="problem"><a href="https://leetcode.com/problems/trapping-rain-water/" target="_blank">LC 42. Trapping Rain Water</a><div class="meta"><span class="difficulty hard">Hard</span> · Advanced two pointers</div></div>
+        </div>
+      </article>
+
+      <article class="glass-card algo-card">
+        <h2>4. Fixed Sliding Window</h2>
+        <span class="tag">Window size k</span><span class="tag">Max average</span><span class="tag">Constant size</span>
+        <p><strong>Use when:</strong> The problem clearly says window/subarray/substring of exactly size k.</p>
+        <ul>
+          <li><strong>Best signal:</strong> “size k”, “length k”, “exactly k elements”.</li>
+          <li><strong>Core thought:</strong> Compute first window, then slide by removing outgoing and adding incoming.</li>
+          <li><strong>Time complexity:</strong> O(n). Without it, checking every window from scratch costs O(n × k).</li>
+          <li><strong>Common trap:</strong> Main loop starts from index k, because first k elements are already included.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Python template</div>
+          <pre><code>window_sum = sum(nums[:k])
+best = window_sum
+
+for i in range(k, len(nums)):
+    window_sum = window_sum - nums[i - k] + nums[i]
+    best = max(best, window_sum)
+
+return best</code></pre>
+        </div>
+        <div class="problems">
+          <div class="problem"><a href="https://leetcode.com/problems/maximum-average-subarray-i/" target="_blank">LC 643. Maximum Average Subarray I</a><div class="meta"><span class="difficulty easy">Easy</span> · Fixed window starter</div></div>
+          <div class="problem"><a href="https://leetcode.com/problems/sliding-window-maximum/" target="_blank">LC 239. Sliding Window Maximum</a><div class="meta"><span class="difficulty hard">Hard</span> · Fixed window + deque</div></div>
+        </div>
+      </article>
+
+      <article class="glass-card algo-card">
+        <h2>5. Variable Sliding Window</h2>
+        <span class="tag">Longest</span><span class="tag">Shortest</span><span class="tag">Condition based</span>
+        <p><strong>Use when:</strong> Window size is not fixed. You expand and shrink until the condition is valid or invalid.</p>
+        <ul>
+          <li><strong>Best signal:</strong> “longest substring”, “minimum length subarray”, “at most k”, “at least target”.</li>
+          <li><strong>Core thought:</strong> Right pointer expands. Left pointer shrinks when the condition demands it.</li>
+          <li><strong>Time complexity:</strong> O(n), because each pointer moves forward only.</li>
+          <li><strong>Common trap:</strong> This works best when the condition changes predictably as the window grows/shrinks.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Python template</div>
+          <pre><code>left = 0
+answer = 0
+state = {}
+
+for right in range(len(arr)):
+    # add arr[right] to state
+
+    while condition_is_broken:
+        # remove arr[left] from state
+        left += 1
+
+    answer = max(answer, right - left + 1)</code></pre>
+        </div>
+        <div class="problems">
+          <div class="problem"><a href="https://leetcode.com/problems/longest-substring-without-repeating-characters/" target="_blank">LC 3. Longest Substring Without Repeating Characters</a><div class="meta"><span class="difficulty medium">Medium</span> · Variable window with set/map</div></div>
+          <div class="problem"><a href="https://leetcode.com/problems/minimum-window-substring/" target="_blank">LC 76. Minimum Window Substring</a><div class="meta"><span class="difficulty hard">Hard</span> · Advanced variable window</div></div>
+        </div>
+      </article>
+
+      <article class="glass-card algo-card">
+        <h2>Confusion: Two Pointers vs Sliding Window</h2>
+        <p>Both use left and right indexes, so beginners confuse them. The difference is the purpose.</p>
+        <ul>
+          <li><strong>Two pointers:</strong> Usually two independent pointers moving to eliminate search space. Example: sorted pair sum.</li>
+          <li><strong>Sliding window:</strong> Left and right form a continuous window. The window content matters.</li>
+          <li><strong>Simple test:</strong> If the answer depends on everything between left and right, it is probably sliding window.</li>
+          <li><strong>Another test:</strong> If you only care about values at left and right, it is probably two pointers.</li>
+        </ul>
+        <div class="code">
+          <div class="code-title">Mental model</div>
+          <pre><code>Two Pointers:
+left value + right value decides movement
+
+Sliding Window:
+all elements between left and right form the current state</code></pre>
+        </div>
+      </article>
+    </section>
+
+    <section class="section">
+      <div class="glass-card">
+        <h2>Final revision cheat sheet</h2>
+        <div class="grid-3">
+          <div>
+            <h3>Prefix Sum</h3>
+            <p>Use for range sums and subarray sum counting. Great when previous accumulated sum helps.</p>
+          </div>
+          <div>
+            <h3>Kadane</h3>
+            <p>Use for best contiguous subarray. At every index, decide extend or restart.</p>
+          </div>
+          <div>
+            <h3>Two Pointers</h3>
+            <p>Use when moving two indexes removes impossible answers, especially sorted arrays.</p>
+          </div>
+          <div>
+            <h3>Fixed Window</h3>
+            <p>Use when window length is exactly k. Remove left, add right.</p>
+          </div>
+          <div>
+            <h3>Variable Window</h3>
+            <p>Use for longest/shortest window satisfying a condition.</p>
+          </div>
+          <div>
+            <h3>Interview Tip</h3>
+            <p>Always explain brute force first, then say which repeated work your pattern removes.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Built for beginner DSA revision. Open this file in browser and keep it as your pattern checklist before solving LeetCode problems.
+    </footer>
+  </main>
+</body>
+</html>

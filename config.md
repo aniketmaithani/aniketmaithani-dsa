@@ -7,3 +7,4 @@
 - Sliding Window Fixed (sliding_window_fixed_visualizer.html)
 - Sliding Window Variable (sliding_window_variable_visualizer.html)
 - Two Pointers (two_pointers_visualizer.html)
+- Which algo to use and when ? (dsa_pattern_chooser_page.html)
