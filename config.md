@@ -8,3 +8,7 @@
 - Sliding Window Variable (sliding_window_variable_visualizer.html)
 - Two Pointers (two_pointers_visualizer.html)
 - Which algo to use and when ? (dsa_pattern_chooser_page.html)
+
+# Sorting
+
+- Insertion Sort (insertion_sort_visualizer_html.html)

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Insertion Sort Visualizer</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #0f172a;
+      color: #e5e7eb;
+      min-height: 100vh;
+      padding: 30px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e293b, #111827);
+      border: 1px solid #334155;
+      border-radius: 24px;
+      padding: 30px;
+      margin-bottom: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      font-size: 42px;
+      margin-bottom: 12px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      color: #cbd5e1;
+      font-size: 18px;
+      line-height: 1.6;
+      max-width: 900px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    .card {
+      background: #111827;
+      border: 1px solid #334155;
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 16px 45px rgba(0, 0, 0, 0.25);
+    }
+
+    .card h2 {
+      font-size: 24px;
+      margin-bottom: 14px;
+      color: #f8fafc;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 14px;
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: #1d4ed8;
+    }
+
+    button.secondary {
+      background: #334155;
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
+    input {
+      width: 100%;
+      background: #020617;
+      color: #e5e7eb;
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 16px;
+      outline: none;
+      margin-top: 8px;
+    }
+
+    .array-box {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      min-height: 170px;
+      margin-top: 28px;
+      padding: 20px;
+      background: #020617;
+      border-radius: 20px;
+      border: 1px solid #1e293b;
+    }
+
+    .item-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .index-label {
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .box {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      background: #475569;
+      color: #f8fafc;
+      border: 2px solid transparent;
+      transition: 0.25s ease;
+    }
+
+    .sorted {
+      background: #064e3b;
+      border-color: #10b981;
+    }
+
+    .current-key {
+      background: #7c2d12;
+      border-color: #fb923c;
+      transform: translateY(-10px);
+    }
+
+    .j-pointer {
+      background: #581c87;
+      border-color: #c084fc;
+      transform: scale(1.08);
+    }
+
+    .shifted {
+      background: #7f1d1d;
+      border-color: #f87171;
+    }
+
+    .insert-position {
+      background: #164e63;
+      border-color: #22d3ee;
+    }
+
+    .pointer-label {
+      height: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #facc15;
+    }
+
+    .status {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 18px;
+      min-height: 120px;
+      margin-top: 20px;
+      line-height: 1.7;
+      color: #dbeafe;
+      font-size: 16px;
+    }
+
+    pre {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 18px;
+      overflow-x: auto;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #d1d5db;
+    }
+
+    .highlight-line {
+      display: block;
+      background: rgba(37, 99, 235, 0.22);
+      border-left: 4px solid #60a5fa;
+      padding-left: 8px;
+      border-radius: 8px;
+    }
+
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .legend-color {
+      width: 20px;
+      height: 20px;
+      border-radius: 7px;
+    }
+
+    .explanation {
+      line-height: 1.75;
+      color: #cbd5e1;
+      font-size: 16px;
+    }
+
+    .complexity {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .complexity-box {
+      background: #020617;
+      border: 1px solid #334155;
+      border-radius: 18px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .complexity-box strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 8px;
+      color: #93c5fd;
+    }
+
+    .note {
+      margin-top: 14px;
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.35);
+      color: #fde68a;
+      padding: 14px;
+      border-radius: 16px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .complexity {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <h1>Insertion Sort Visualizer</h1>
+      <p class="subtitle">
+        This page explains Insertion Sort with special focus on the <b>while loop</b>. You will see how the key is picked, how <b>j</b> moves backwards, how bigger elements shift right, and where the key finally gets inserted.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>Interactive Visualization</h2>
+        <label>Array values</label>
+        <input id="arrayInput" value="5, 2, 4, 6, 1, 3" />
+
+        <div class="controls">
+          <button onclick="loadArray()">Load Array</button>
+          <button onclick="nextStep()">Next Step</button>
+          <button onclick="autoPlay()">Auto Play</button>
+          <button class="secondary" onclick="resetVisualizer()">Reset</button>
+        </div>
+
+        <div id="arrayBox" class="array-box"></div>
+        <div id="status" class="status"></div>
+
+        <div class="legend">
+          <div class="legend-item"><span class="legend-color" style="background:#064e3b"></span>Sorted part</div>
+          <div class="legend-item"><span class="legend-color" style="background:#7c2d12"></span>Current key</div>
+          <div class="legend-item"><span class="legend-color" style="background:#581c87"></span>j pointer</div>
+          <div class="legend-item"><span class="legend-color" style="background:#7f1d1d"></span>Element shifted</div>
+          <div class="legend-item"><span class="legend-color" style="background:#164e63"></span>Insertion position</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Code Focus</h2>
+        <pre id="codeBlock"></pre>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card">
+        <h2>How Insertion Sort Works</h2>
+        <p class="explanation">
+          Insertion Sort treats the left side of the array as sorted. It picks one element from the unsorted side and inserts it into the correct position inside the sorted side. The most important part is the <b>while loop</b>, because that is where elements are shifted to make space for the key.
+        </p>
+        <div class="note">
+          Simple thought: Pick one element, move left, shift bigger elements right, and finally place the picked element at the empty position.
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Complexity</h2>
+        <div class="complexity">
+          <div class="complexity-box">Best Case<strong>O(n)</strong></div>
+          <div class="complexity-box">Average Case<strong>O(n²)</strong></div>
+          <div class="complexity-box">Worst Case<strong>O(n²)</strong></div>
+        </div>
+        <div class="note">
+          Best case happens when the array is already sorted. Worst case happens when the array is reverse sorted, because every element has to shift many positions.
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let arr = [];
+    let steps = [];
+    let stepIndex = 0;
+    let intervalId = null;
+
+    const codeLines = [
+      'def insertion_sort(arr):',
+      '    for i in range(1, len(arr)):',
+      '        key = arr[i]',
+      '        j = i - 1',
+      '        while j >= 0 and arr[j] > key:',
+      '            arr[j + 1] = arr[j]',
+      '            j -= 1',
+      '        arr[j + 1] = key',
+      '    return arr'
+    ];
+
+    function renderCode(activeLine) {
+      const html = codeLines.map((line, index) => {
+        const escaped = line.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        if (index === activeLine) {
+          return `<span class="highlight-line">${escaped}</span>`;
+        }
+        return escaped;
+      }).join('\n');
+      document.getElementById('codeBlock').innerHTML = html;
+    }
+
+    function loadArray() {
+      const input = document.getElementById('arrayInput').value;
+      arr = input.split(',').map(x => Number(x.trim())).filter(x => !Number.isNaN(x));
+      generateSteps();
+      stepIndex = 0;
+      clearInterval(intervalId);
+      intervalId = null;
+      renderStep();
+    }
+
+    function generateSteps() {
+      steps = [];
+      let a = [...arr];
+      const n = a.length;
+
+      steps.push({
+        array: [...a],
+        sortedUntil: 0,
+        message: 'Initially, only the first element is considered sorted.',
+        activeLine: 0
+      });
+
+      for (let i = 1; i < n; i++) {
+        let key = a[i];
+        let j = i - 1;
+
+        steps.push({
+          array: [...a],
+          i,
+          keyIndex: i,
+          sortedUntil: i - 1,
+          message: `Outer loop starts with i = ${i}. We pick key = ${key}.`,
+          activeLine: 2
+        });
+
+        steps.push({
+          array: [...a],
+          i,
+          j,
+          keyIndex: i,
+          sortedUntil: i - 1,
+          message: `Set j = i - 1 = ${j}. Now we compare arr[j] with key.`,
+          activeLine: 3
+        });
+
+        while (j >= 0 && a[j] > key) {
+          steps.push({
+            array: [...a],
+            i,
+            j,
+            keyValue: key,
+            sortedUntil: i - 1,
+            message: `while condition is true: j >= 0 and arr[${j}] = ${a[j]} > key = ${key}.`,
+            activeLine: 4
+          });
+
+          a[j + 1] = a[j];
+
+          steps.push({
+            array: [...a],
+            i,
+            j,
+            shiftedIndex: j + 1,
+            keyValue: key,
+            sortedUntil: i - 1,
+            message: `Shift arr[${j}] to the right. Now arr[${j + 1}] becomes ${a[j + 1]}.`,
+            activeLine: 5
+          });
+
+          j--;
+
+          steps.push({
+            array: [...a],
+            i,
+            j,
+            keyValue: key,
+            sortedUntil: i - 1,
+            message: `Move j one step left. New j = ${j}.`,
+            activeLine: 6
+          });
+        }
+
+        steps.push({
+          array: [...a],
+          i,
+          j,
+          keyValue: key,
+          insertIndex: j + 1,
+          sortedUntil: i - 1,
+          message: `while loop stops. Correct position for key = ${key} is index ${j + 1}.`,
+          activeLine: 4
+        });
+
+        a[j + 1] = key;
+
+        steps.push({
+          array: [...a],
+          i,
+          insertIndex: j + 1,
+          sortedUntil: i,
+          message: `Insert key = ${key} at index ${j + 1}. Now elements from index 0 to ${i} are sorted.`,
+          activeLine: 7
+        });
+      }
+
+      steps.push({
+        array: [...a],
+        sortedUntil: n - 1,
+        message: 'Sorting completed. Full array is sorted.',
+        activeLine: 8
+      });
+    }
+
+    function renderStep() {
+      const step = steps[stepIndex];
+      const arrayBox = document.getElementById('arrayBox');
+      arrayBox.innerHTML = '';
+
+      step.array.forEach((value, index) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'item-wrapper';
+
+        const pointer = document.createElement('div');
+        pointer.className = 'pointer-label';
+
+        if (index === step.j) pointer.innerText = 'j';
+        if (index === step.keyIndex) pointer.innerText = 'key';
+        if (index === step.insertIndex) pointer.innerText = 'insert';
+
+        const box = document.createElement('div');
+        box.className = 'box';
+        box.innerText = value;
+
+        if (step.sortedUntil !== undefined && index <= step.sortedUntil) {
+          box.classList.add('sorted');
+        }
+        if (index === step.keyIndex) {
+          box.classList.add('current-key');
+        }
+        if (index === step.j) {
+          box.classList.add('j-pointer');
+        }
+        if (index === step.shiftedIndex) {
+          box.classList.add('shifted');
+        }
+        if (index === step.insertIndex) {
+          box.classList.add('insert-position');
+        }
+
+        const indexLabel = document.createElement('div');
+        indexLabel.className = 'index-label';
+        indexLabel.innerText = `idx ${index}`;
+
+        wrapper.appendChild(pointer);
+        wrapper.appendChild(box);
+        wrapper.appendChild(indexLabel);
+        arrayBox.appendChild(wrapper);
+      });
+
+      document.getElementById('status').innerHTML = `
+        <b>Step ${stepIndex + 1} of ${steps.length}</b><br />
+        ${step.message}
+      `;
+
+      renderCode(step.activeLine);
+    }
+
+    function nextStep() {
+      if (stepIndex < steps.length - 1) {
+        stepIndex++;
+        renderStep();
+      }
+    }
+
+    function autoPlay() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+        return;
+      }
+
+      intervalId = setInterval(() => {
+        if (stepIndex >= steps.length - 1) {
+          clearInterval(intervalId);
+          intervalId = null;
+          return;
+        }
+        nextStep();
+      }, 1200);
+    }
+
+    function resetVisualizer() {
+      clearInterval(intervalId);
+      intervalId = null;
+      stepIndex = 0;
+      renderStep();
+    }
+
+    loadArray();
+  </script>
+</body>
+</html>
